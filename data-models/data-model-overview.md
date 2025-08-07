@@ -1,187 +1,193 @@
-# Field Configuration System - Implementation Summary
+# Data Model System - Implementation Overview
 
 ## Problem
-Your insurance quote audit interface had several major issues:
-- **Poor Field Labels**: Schema names like "is_student_over_100_miles" instead of user-friendly labels
-- **No Input Types**: Everything was free-form text, no dropdowns, date pickers, etc.
-- **Poor Formatting**: Numbers, currency, phone numbers displayed without proper formatting
-- **No Validation**: Users could enter anything without validation
-- **Random Ordering**: Fields appeared in schema order, not logical user order
-- **Inconsistent Styling**: No control over text casing and presentation
+Insurance data systems often struggle with transforming technical schema data into user-friendly interfaces. Common issues include:
+- **Technical field names**: Schema keys like "is_student_over_100_miles" instead of readable labels
+- **Generic input types**: Free-form text everywhere instead of specialized inputs
+- **Inconsistent formatting**: No standardized display of currency, phone numbers, dates
+- **Complex validation**: Manual validation without reusable rules
+- **Poor organization**: Fields appear in schema order rather than logical user flow
+- **State dependencies**: No way to handle state-specific options or conditional fields
 
 ## Solution Overview
-I've created a **JSON-based field configuration system** that maps your schema field keys to comprehensive UI properties. This approach gives you:
+The **TypeScript-based data mapping system** transforms insurance schema properties into comprehensive UI configurations. This system provides:
 
-✅ **User-friendly labels** ("Does the student live more than 100 miles from home?")  
-✅ **Proper input types** (dropdowns, date pickers, currency inputs, etc.)  
-✅ **Automatic formatting** (currency with $, phone numbers with proper formatting)  
-✅ **Built-in validation** (required fields, min/max values, pattern matching)  
-✅ **Logical ordering** (fields grouped and ordered sensibly)  
-✅ **Consistent styling** (title case, upper case, etc.)  
+✅ **Smart property mapping** with user-friendly labels and descriptions  
+✅ **Specialized input types** (currency, phone, material percentages, claims arrays, etc.)  
+✅ **Advanced validation** with insurance-specific business rules  
+✅ **State-aware configurations** with state-specific dropdown options  
+✅ **Hierarchical organization** with parent/child group relationships  
+✅ **Dynamic field support** for arrays and conditional properties  
+✅ **Template-based patterns** for handling repeating data structures  
 
-## Files Created
+## Core Components
 
-### 1. `src/config/field-configurations.ts`
-The core configuration file with:
-- TypeScript interfaces for field configurations
-- Sample field configurations showing all patterns
-- Helper functions to retrieve and organize fields
-- Field groups for logical organization
+### 1. `data-mappings.ts`
+The comprehensive mapping system featuring:
+- **Advanced TypeScript interfaces** for all data types
+- **Specialized input types** (material_percentage, claims_array, etc.)
+- **State-specific configurations** with fallback options
+- **Validation helpers** for complex business rules
+- **Hierarchical group structure** with template support
+- **Dynamic field resolution** for array-based data
 
-### 2. `src/utils/field-utils.ts`
-Utility functions for:
-- Text casing (title, upper, lower, sentence)
-- Number/currency formatting with commas and symbols
-- Phone number formatting: (555) 123-4567
-- Date, VIN, SSN, ZIP code formatting
-- Field validation (required, min/max, patterns, email, phone)
-- Value parsing (removing formatting when saving)
+### 2. **Advanced Data Structures**
+- **MaterialPercentage**: Handles construction material coverage percentages
+- **InsuranceClaim**: Comprehensive claim data with categorization
+- **PriorCarrier**: Insurance history with policy details
+- **StateSpecificOptions**: Dynamic options based on location
+- **FieldGroup**: Hierarchical organization with parent/child relationships
 
-### 3. `src/components/pages/remarketing/enhanced-dialog-box.tsx`
-Enhanced dialog component with:
-- Different input types (text, dropdown, date, etc.)
-- Real-time validation with error display
-- Preview of formatted values
-- Proper input handling for each field type
+### 3. **Intelligent Field Resolution**
+- **Template matching** for array fields using `[*]` notation
+- **Dynamic group creation** based on data structure
+- **State-aware option resolution** for location-dependent fields
+- **Hierarchical field organization** with automatic sorting
 
-### 4. `src/components/pages/remarketing/enhanced-audit-accordion.tsx`
-Enhanced accordion component that:
-- Uses field configurations for display and editing
-- Groups fields by configuration
-- Shows proper labels and descriptions
-- Formats values correctly for display
-- Indicates required fields and edited fields
+## Advanced Features
 
-### 5. `field-configuration-template.md`
-Comprehensive guide with:
-- Examples for all field types
-- Insurance-specific patterns
-- Implementation workflow
-- Validation patterns
-
-## Key Features
-
-### Smart Field Mapping
+### State-Aware Configuration
 ```typescript
-// Schema field key -> User-friendly configuration
-'applicant.is_student_over_100_miles': {
-  label: 'Does the student live more than 100 miles from home?',
-  description: 'Select yes if the student attends school...',
-  inputType: 'radio',
-  options: [
-    { value: 'true', label: 'Yes' },
-    { value: 'false', label: 'No' },
-    { value: 'not_applicable', label: 'Not Applicable' }
-  ]
+// State-specific dropdown options
+'home.construction.roof_type': {
+  label: 'Roof Type',
+  inputType: 'dropdown',
+  stateSpecificOptions: {
+    'FL': [{ value: 'tile', label: 'Tile' }, { value: 'metal', label: 'Metal' }],
+    'CA': [{ value: 'tile', label: 'Tile' }, { value: 'comp_shingle', label: 'Composition Shingle' }],
+    default: [{ value: 'comp_shingle', label: 'Composition Shingle' }]
+  },
+  dependsOnStateFrom: 'home.property_address.state'
 }
 ```
 
-### Automatic Formatting
+### Complex Data Structures
 ```typescript
-// Currency fields automatically format
-'coverage.dwelling_amount': {
-  inputType: 'currency',
-  prefix: '$',
-  // Input: 250000 → Display: $250,000
+// Material percentage validation
+export const validateMaterialPercentages = (materials: MaterialPercentage[]): ValidationResult => {
+  const totalPercentage = materials.reduce((sum, item) => sum + (item.percentage || 0), 0);
+  if (totalPercentage > 100) {
+    return { isValid: false, message: 'Total percentage cannot exceed 100%' };
+  }
+  return { isValid: true };
+};
+
+// Insurance claims with comprehensive categorization
+export interface InsuranceClaim {
+  description: string;
+  date: string;
+  amount: number;
+  type: string; // 40+ predefined claim types
+  is_catastrophe_loss: boolean;
+}
+```
+
+### Hierarchical Organization
+```typescript
+// Parent/child group relationships
+export interface FieldGroup {
+  id: string;
+  name: string;
+  order: number;
+  parentGroup?: string;        // Nested group support
+  isTemplate?: boolean;        // Dynamic group creation
+  templatePattern?: string;    // Array field patterns
+  dynamicNamePattern?: string; // Runtime naming
+}
+```
+
+### Template-Based Field Mapping
+```typescript
+// Handle array fields with templates
+'client.household_members[*].first_name': {
+  label: 'First Name',
+  inputType: 'text',
+  group: 'household_member_template'
 }
 
-// Phone numbers automatically format
-'applicant.phone': {
-  inputType: 'phone',
-  // Input: 5551234567 → Display: (555) 123-4567
-}
+// Runtime resolution creates:
+// 'client.household_members[0].first_name' -> 'household_member_0'
+// 'client.household_members[1].first_name' -> 'household_member_1'
 ```
 
-### Intelligent Grouping & Ordering
-Fields are organized into logical groups like:
-- Personal Information (order: 1)
-- Contact Information (order: 2)  
-- Insurance History (order: 3)
-- Coverage Preferences (order: 4)
+## Implementation Strategy
 
-Within each group, fields are ordered by their `order` property.
+### Phase 1: Schema Analysis
+1. **Analyze JSON schemas** in `data-schemas/` folder
+2. **Identify property patterns** and relationships
+3. **Map complex structures** (arrays, nested objects, state dependencies)
+4. **Document business rules** and validation requirements
 
-### Built-in Validation
-```typescript
-validations: [
-  { type: 'required', message: 'This field is required' },
-  { type: 'min', value: 50000, message: 'Minimum is $50,000' },
-  { type: 'email', message: 'Invalid email address' }
-]
+### Phase 2: Configuration Development
+1. **Start with core properties** (applicant, basic coverage)
+2. **Implement specialized input types** (currency, percentages, claims)
+3. **Configure state-specific options** for location-dependent fields
+4. **Set up hierarchical groups** with parent/child relationships
+5. **Create templates** for array-based data structures
+
+### Phase 3: Advanced Features
+1. **Implement dynamic group creation** for runtime data
+2. **Configure conditional field display** based on other values
+3. **Set up validation helpers** for complex business rules
+4. **Test template resolution** for array fields
+
+## System Benefits
+
+### Advanced User Experience
+- **Context-aware interfaces** that adapt to state and data
+- **Specialized input controls** for insurance-specific data types
+- **Dynamic form generation** based on data structure
+- **Intelligent validation** with business rule enforcement
+- **Hierarchical organization** that mirrors user mental models
+
+### Data Integrity
+- **State-specific validation** ensures location-appropriate data
+- **Complex business rules** enforced automatically
+- **Array data handling** with structured validation
+- **Material percentage validation** ensuring totals don't exceed 100%
+- **Claims categorization** with predefined types
+
+### System Architecture
+- **TypeScript type safety** prevents configuration errors
+- **Template-based scalability** for handling dynamic data
+- **Hierarchical organization** supports complex data relationships
+- **State management integration** for dynamic option resolution
+- **Extensible framework** for adding new input types and validations
+
+## Real-World Examples
+
+### State-Specific Configuration
+```
+Before: Generic "Roof Type" dropdown for all states
+After: Florida shows Tile/Metal options, California shows Tile/Composition Shingle, 
+       other states show standard options based on state property
 ```
 
-## Implementation Steps for Your Team
-
-### Phase 1: Data Collection
-1. **Export all field keys** from your API response
-2. **Create a spreadsheet** with columns:
-   - Field Key (from schema)
-   - User Label (what users should see)
-   - Input Type (text, dropdown, currency, etc.)
-   - Required (yes/no)
-   - Options (for dropdowns)
-   - Validation Rules
-   - Group
-   - Order
-
-### Phase 2: Configuration Building
-1. **Start with one section** (e.g., applicant info)
-2. **Add 10-20 fields** to the configuration
-3. **Test the enhanced components**
-4. **Expand incrementally**
-
-### Phase 3: Component Integration
-1. **Replace existing AuditAccordion** with EnhancedAuditAccordion
-2. **Replace DialogBox** with EnhancedDialogBox
-3. **Test field editing and saving**
-4. **Verify formatting and validation**
-
-## Benefits You'll See Immediately
-
-### User Experience
-- **Clear field labels** instead of technical schema names
-- **Appropriate input types** (dropdowns instead of free text)
-- **Helpful descriptions** and validation messages
-- **Logical field organization** and ordering
-- **Professional formatting** of all values
-
-### Data Quality
-- **Input validation** prevents bad data entry
-- **Proper formatting** ensures consistency
-- **Required field enforcement**
-- **Type-specific validation** (email format, phone numbers, etc.)
-
-### Maintainability
-- **Centralized configuration** - change labels in one place
-- **Type-safe** - TypeScript catches configuration errors
-- **Version controlled** - configuration changes tracked in git
-- **Extensible** - easy to add new field types and validations
-
-## Sample Before/After
-
-### Before
+### Complex Data Validation
 ```
-Field: is_student_over_100_miles
-Input: Free text field
-User sees: "Is Student Over 100 Miles" (confusing)
-User can enter: "maybe", "sometimes", "100.1 miles" (invalid)
+Before: Free text for construction materials
+After: Structured MaterialPercentage[] with validation ensuring:
+       - No duplicate materials
+       - Total percentage ≤ 100%
+       - Proper material categorization
 ```
 
-### After
+### Dynamic Structure Handling
 ```
-Field: is_student_over_100_miles  
-Input: Radio buttons
-User sees: "Does the student live more than 100 miles from home?"
-Description: "Select yes if the student attends school and lives..."
-Options: Yes | No | Not Applicable
-Validation: Required field, must select one option
+Before: Fixed form structure regardless of data
+After: Dynamic group creation for:
+       - Multiple household members
+       - Multiple vehicles  
+       - Variable claim history
+       - Flexible coverage options
 ```
 
-## Quick Start
+## Getting Started
 
-1. **Review the field-configuration-template.md** for examples
-2. **Start adding your fields** to `src/config/field-configurations.ts`
-3. **Test with a few fields** using the enhanced components
-4. **Gradually expand** to cover all your fields
+1. **Explore the current mappings** in `data-mappings.ts`
+2. **Understand the schema structure** from `data-schemas/` folder
+3. **Review specialized input types** and their validation rules
+4. **Study template patterns** for array-based fields
+5. **Test state-specific configurations** with sample data
 
-This system will dramatically improve your user experience and data quality while being maintainable and extensible for the future! 
+This system provides enterprise-level insurance data management with the flexibility to handle complex, state-dependent, and dynamic data structures while maintaining type safety and data integrity. 

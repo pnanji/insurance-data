@@ -1,315 +1,435 @@
-# Field Configuration Template & Implementation Guide
+# Data Mappings Guide & Implementation Patterns
 
 ## Overview
-This guide shows how to expand the field configuration system to handle all your insurance audit fields. The system provides:
+This comprehensive guide demonstrates how to implement and extend the advanced data mapping system for insurance applications. The system supports:
 
-- **Field Labels**: User-friendly labels instead of schema names
-- **Input Types**: Proper input components (text, number, currency, dropdown, etc.)
-- **Formatting**: Currency, phone, percentage, etc. with proper display formatting
-- **Validation**: Field-specific validation rules
-- **Ordering**: Logical grouping and ordering of fields
-- **Styling**: Text casing (title, upper, lower)
+- **Advanced Input Types**: Specialized inputs (material_percentage, claims_array, state-specific dropdowns)
+- **Dynamic Configuration**: State-aware options and conditional field display
+- **Complex Validation**: Business rule enforcement with custom validators
+- **Hierarchical Organization**: Parent/child groups with template-based dynamic creation
+- **Array Data Handling**: Template patterns for repeating data structures
+- **Type Safety**: Full TypeScript integration with interface definitions
 
-## How to Add New Fields
+## Core Implementation Patterns
 
-### 1. Basic Text Field Example
+### 1. State-Specific Configuration
 ```typescript
-'applicant.middle_name': {
-  key: 'applicant.middle_name',
-  label: 'Middle Name',
-  inputType: 'text',
-  displayCasing: 'title',
-  inputCasing: 'title',
-  group: 'personal',
-  section: 'applicant',
-  order: 3,
-  required: false
-},
-```
-
-### 2. Currency Field Example
-```typescript
-'coverage.personal_property_limit': {
-  key: 'coverage.personal_property_limit',
-  label: 'Personal Property Coverage Limit',
-  description: 'Maximum coverage for personal belongings',
-  inputType: 'currency',
-  displayCasing: 'none',
-  prefix: '$',
-  group: 'coverage_preferences',
-  section: 'home',
-  order: 25,
-  required: true,
-  validations: [
-    { type: 'required', message: 'Personal property coverage is required' },
-    { type: 'min', value: 10000, message: 'Minimum coverage is $10,000' },
-    { type: 'max', value: 1000000, message: 'Maximum coverage is $1,000,000' }
-  ]
-},
-```
-
-### 3. Dropdown with Options Example
-```typescript
-'property.construction_type': {
-  key: 'property.construction_type',
-  label: 'Home Construction Type',
-  description: 'Primary construction material of your home',
+'home.construction.roof_type': {
+  key: 'home.construction.roof_type',
+  label: 'Roof Type',
   inputType: 'dropdown',
-  displayCasing: 'title',
-  group: 'property_details',
+  stateSpecificOptions: {
+    'FL': [
+      { value: 'tile', label: 'Tile' },
+      { value: 'metal', label: 'Metal' },
+      { value: 'comp_shingle', label: 'Composition Shingle' }
+    ],
+    'CA': [
+      { value: 'tile', label: 'Tile' },
+      { value: 'comp_shingle', label: 'Composition Shingle' },
+      { value: 'wood_shake', label: 'Wood Shake' }
+    ],
+    default: [
+      { value: 'comp_shingle', label: 'Composition Shingle' },
+      { value: 'asphalt', label: 'Asphalt' }
+    ]
+  },
+  dependsOnStateFrom: 'home.property_address.state',
+  group: 'construction_details',
   section: 'home',
   order: 15,
-  required: true,
-  options: [
-    { value: 'frame', label: 'Frame/Wood' },
-    { value: 'masonry', label: 'Masonry/Brick' },
-    { value: 'concrete', label: 'Concrete' },
-    { value: 'steel', label: 'Steel Frame' },
-    { value: 'other', label: 'Other' }
-  ]
-},
+  displayCasing: 'title'
+}
 ```
 
-### 4. Yes/No Boolean Field Example
+### 2. Material Percentage Input
 ```typescript
-'property.has_swimming_pool': {
-  key: 'property.has_swimming_pool',
-  label: 'Does the property have a swimming pool?',
-  inputType: 'radio',
-  displayCasing: 'title',
-  group: 'property_details',
+'home.construction.exterior_wall_materials': {
+  key: 'home.construction.exterior_wall_materials',
+  label: 'Exterior Wall Materials',
+  description: 'Specify materials and their coverage percentages',
+  inputType: 'material_percentage',
+  group: 'construction_details',
   section: 'home',
-  order: 50,
-  options: [
-    { value: 'true', label: 'Yes' },
-    { value: 'false', label: 'No' }
-  ]
-},
-```
-
-## Common Insurance Field Patterns
-
-### Driver Information
-```typescript
-'drivers[0].license_number': {
-  key: 'drivers[0].license_number',
-  label: 'Driver License Number',
-  inputType: 'license',
-  displayCasing: 'upper',
-  inputCasing: 'upper',
-  group: 'drivers',
-  section: 'auto',
-  order: 10,
-  required: true,
+  order: 20,
+  displayCasing: 'title',
   validations: [
-    { type: 'required', message: 'License number is required' },
-    { type: 'minLength', value: 5, message: 'License number too short' }
+    { type: 'custom', message: 'Total percentage cannot exceed 100%' }
   ]
-},
+}
 ```
 
-### Vehicle Information
+### 3. Claims Array Configuration
 ```typescript
-'vehicles[0].year': {
-  key: 'vehicles[0].year',
-  label: 'Vehicle Year',
-  inputType: 'number',
-  displayCasing: 'none',
+'client.claims_history': {
+  key: 'client.claims_history',
+  label: 'Claims History',
+  description: 'Previous insurance claims in the last 5 years',
+  inputType: 'claims_array',
+  group: 'insurance_history',
+  section: 'applicant',
+  order: 40,
+  displayCasing: 'none'
+}
+```
+
+### 4. Template-Based Array Fields
+```typescript
+// Template for any household member
+'client.household_members[*].first_name': {
+  key: 'client.household_members[*].first_name',
+  label: 'First Name',
+  inputType: 'text',
+  displayCasing: 'title',
+  group: 'household_member_template',
+  section: 'applicant',
+  order: 1,
+  required: true
+}
+
+// Runtime creates:
+// 'client.household_members[0].first_name' -> group: 'household_member_0'
+// 'client.household_members[1].first_name' -> group: 'household_member_1'
+```
+
+### 5. Conditional Field Display
+```typescript
+'auto.anti_theft_device_type': {
+  key: 'auto.anti_theft_device_type',
+  label: 'Anti-Theft Device Type',
+  inputType: 'dropdown',
+  options: [
+    { value: 'passive_disabling', label: 'Passive Disabling Device' },
+    { value: 'active_disabling', label: 'Active Disabling Device' },
+    { value: 'tracking_device', label: 'Tracking Device' },
+    { value: 'alarm', label: 'Alarm System' }
+  ],
+  conditional: {
+    dependsOn: 'auto.has_anti_theft_device',
+    when: 'equals',
+    value: 'true'
+  },
   group: 'vehicle_details',
   section: 'auto',
-  order: 1,
-  required: true,
-  validations: [
-    { type: 'required', message: 'Vehicle year is required' },
-    { type: 'min', value: 1900, message: 'Year must be 1900 or later' },
-    { type: 'max', value: new Date().getFullYear() + 2, message: 'Year cannot be more than 2 years in the future' }
-  ]
-},
+  order: 25,
+  displayCasing: 'title'
+}
 ```
 
-### Coverage Limits
+## Advanced Configuration Patterns
+
+### Hierarchical Group Structure
 ```typescript
-'coverage.collision_deductible': {
-  key: 'coverage.collision_deductible',
-  label: 'Collision Deductible',
-  inputType: 'dropdown',
-  displayCasing: 'none',
-  prefix: '$',
-  group: 'coverage_preferences',
-  section: 'auto',
-  order: 40,
-  options: [
-    { value: '250', label: '$250' },
-    { value: '500', label: '$500' },
-    { value: '1000', label: '$1,000' },
-    { value: '2500', label: '$2,500' }
-  ]
-},
-```
-
-## Field Groups to Consider
-
-### Personal Information
-- Name fields (first, middle, last, suffix)
-- Date of birth
-- SSN (last 4 digits)
-- Marital status
-- Occupation
-
-### Contact Information
-- Email address
-- Phone numbers (home, work, mobile)
-- Address fields
-- Mailing address (if different)
-
-### Insurance History
-- Current carrier
-- Policy expiration date
-- Years with current carrier
-- Claims history
-- Previous lapses in coverage
-
-### Property Details (Home)
-- Property type (single family, condo, etc.)
-- Construction type
-- Year built
-- Square footage
-- Number of stories
-- Roof type and age
-- Heating/cooling systems
-- Security features
-- Swimming pool
-- Other structures
-
-### Coverage Preferences (Home)
-- Dwelling coverage
-- Personal property
-- Liability limits
-- Medical payments
-- Deductibles
-- Optional coverages
-
-### Vehicle Information
-- Year, make, model
-- VIN
-- Mileage
-- Vehicle use
-- Garaging address
-- Safety features
-- Anti-theft devices
-
-### Driver Information
-- License number
-- License state
-- Date licensed
-- Violations/accidents
-- Driver training courses
-- Good student discount
-
-### Coverage Preferences (Auto)
-- Liability limits
-- Comprehensive/collision
-- Deductibles
-- Uninsured motorist
-- Personal injury protection
-- Rental reimbursement
-
-## Implementation Steps
-
-1. **Audit Your Current Fields**: Get a complete list of all fields from your API response
-2. **Group Similar Fields**: Organize into logical groups
-3. **Define Field Properties**: For each field, determine:
-   - User-friendly label
-   - Input type needed
-   - Validation rules
-   - Formatting requirements
-   - Available options (for dropdowns)
-4. **Add to Configuration**: Expand the `FIELD_CONFIGURATIONS` object
-5. **Test Incrementally**: Add fields in batches and test
-
-## Sample Implementation Workflow
-
-```typescript
-// Example: Adding all driver fields
-const driverFields = {
-  'drivers[0].first_name': {
-    key: 'drivers[0].first_name',
-    label: 'Driver First Name',
-    inputType: 'text',
-    displayCasing: 'title',
-    inputCasing: 'title',
-    group: 'drivers',
-    section: 'auto',
+export const FIELD_GROUPS: Record<string, FieldGroup> = {
+  // Parent group
+  'personal_information': {
+    id: 'personal_information',
+    name: 'Personal Information',
     order: 1,
-    required: true
+    description: 'Basic applicant details'
   },
   
-  'drivers[0].date_of_birth': {
-    key: 'drivers[0].date_of_birth',
-    label: 'Driver Date of Birth',
+  // Child group
+  'contact_details': {
+    id: 'contact_details',
+    name: 'Contact Details',
+    order: 2,
+    parentGroup: 'personal_information', // Nested under personal_information
+    description: 'Phone, email, and address information'
+  },
+  
+  // Template group for dynamic creation
+  'household_member_template': {
+    id: 'household_member_template',
+    name: 'Household Member',
+    order: 10,
+    isTemplate: true,
+    templatePattern: 'client.household_members[*]',
+    dynamicNamePattern: 'Household Member {index}'
+  }
+}
+```
+
+### Complex Data Structures
+
+#### Material Percentage Interface
+```typescript
+export interface MaterialPercentage {
+  material: string;    // The material type (e.g., "Paint", "Hardwood")
+  percentage: number;  // Percentage of coverage (0-100)
+}
+
+// Validation helper
+export const validateMaterialPercentages = (materials: MaterialPercentage[]): ValidationResult => {
+  if (!materials || materials.length === 0) return { isValid: true };
+  
+  const totalPercentage = materials.reduce((sum, item) => sum + (item.percentage || 0), 0);
+  
+  if (totalPercentage > 100) {
+    return { isValid: false, message: 'Total percentage cannot exceed 100%' };
+  }
+  
+  // Check for duplicate materials
+  const materialNames = materials.map(item => item.material);
+  const uniqueMaterials = new Set(materialNames);
+  if (materialNames.length !== uniqueMaterials.size) {
+    return { isValid: false, message: 'Cannot have duplicate materials' };
+  }
+  
+  return { isValid: true };
+};
+```
+
+#### Insurance Claims Interface
+```typescript
+export interface InsuranceClaim {
+  description: string;
+  date: string;
+  amount: number;
+  type: string; // 40+ predefined claim types
+  is_catastrophe_loss: boolean;
+}
+
+// Claims field schema
+export const CLAIMS_FIELD_SCHEMA = {
+  description: {
+    label: 'Claim Description',
+    inputType: 'textarea',
+    required: false,
+    placeholder: 'Describe what happened...'
+  },
+  date: {
+    label: 'Claim Date',
     inputType: 'date',
-    displayCasing: 'none',
-    group: 'drivers',
-    section: 'auto',
-    order: 3,
-    required: true
+    required: false
   },
-  
-  'drivers[0].marital_status': {
-    key: 'drivers[0].marital_status',
-    label: 'Marital Status',
+  amount: {
+    label: 'Claim Amount',
+    inputType: 'currency',
+    required: false,
+    prefix: '$',
+    validations: [
+      { type: 'min', value: 0, message: 'Amount cannot be negative' }
+    ]
+  },
+  type: {
+    label: 'Claim Type',
     inputType: 'dropdown',
-    displayCasing: 'title',
-    group: 'drivers',
-    section: 'auto',
-    order: 5,
+    required: false,
     options: [
-      { value: 'single', label: 'Single' },
-      { value: 'married', label: 'Married' },
-      { value: 'divorced', label: 'Divorced' },
-      { value: 'widowed', label: 'Widowed' }
+      { value: 'Fire', label: 'Fire' },
+      { value: 'Water Damage', label: 'Water Damage' },
+      { value: 'Theft/Burglary', label: 'Theft/Burglary' },
+      { value: 'Hail', label: 'Hail' },
+      { value: 'Wind', label: 'Wind' },
+      // ... 35+ more claim types
+    ]
+  },
+  is_catastrophe_loss: {
+    label: 'Catastrophe Loss',
+    inputType: 'radio',
+    required: false,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
     ]
   }
 };
+```
 
-// Add to your FIELD_CONFIGURATIONS object
-export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
-  ...existingFields,
-  ...driverFields
+#### Prior Insurance Carriers
+```typescript
+export interface PriorCarrier {
+  carrier: string;
+  policy_number: string;
+  premium: string;
+  term_start_date: string;
+  term_end_date: string;
+}
+
+export const PRIOR_CARRIERS_FIELD_SCHEMA = {
+  carrier: {
+    label: 'Insurance Carrier',
+    inputType: 'text',
+    required: false,
+    placeholder: 'e.g., State Farm, Allstate, GEICO'
+  },
+  policy_number: {
+    label: 'Policy Number',
+    inputType: 'text',
+    required: false,
+    placeholder: 'Enter policy number'
+  },
+  premium: {
+    label: 'Annual Premium',
+    inputType: 'currency',
+    required: false,
+    prefix: '$',
+    validations: [
+      { type: 'min', value: 0, message: 'Premium cannot be negative' }
+    ]
+  },
+  term_start_date: {
+    label: 'Policy Start Date',
+    inputType: 'date',
+    required: false
+  },
+  term_end_date: {
+    label: 'Policy End Date',
+    inputType: 'date',
+    required: false
+  }
 };
 ```
 
-## Validation Patterns
+## Helper Functions & Utilities
 
-### Common Validation Rules
+### State-Specific Option Resolution
 ```typescript
-// Required field
-{ type: 'required', message: 'This field is required' }
-
-// Numeric ranges
-{ type: 'min', value: 0, message: 'Value must be positive' }
-{ type: 'max', value: 100, message: 'Value cannot exceed 100' }
-
-// String length
-{ type: 'minLength', value: 2, message: 'Must be at least 2 characters' }
-{ type: 'maxLength', value: 50, message: 'Cannot exceed 50 characters' }
-
-// Pattern matching
-{ type: 'pattern', value: '^[A-Z]{2}\\d{6}$', message: 'Invalid license format' }
-
-// Built-in types
-{ type: 'email', message: 'Invalid email address' }
-{ type: 'phone', message: 'Invalid phone number' }
+export const getStateSpecificOptions = (
+  fieldKey: string, 
+  auditData: any
+): DropdownOption[] => {
+  const fieldConfig = FIELD_CONFIGURATIONS[fieldKey];
+  
+  if (!fieldConfig?.stateSpecificOptions || !fieldConfig.dependsOnStateFrom) {
+    return fieldConfig?.options || [];
+  }
+  
+  const stateCode = getNestedValue(auditData, fieldConfig.dependsOnStateFrom);
+  
+  if (stateCode && fieldConfig.stateSpecificOptions[stateCode]) {
+    return fieldConfig.stateSpecificOptions[stateCode];
+  }
+  
+  return fieldConfig.stateSpecificOptions.default;
+};
 ```
 
-## Next Steps for Your Team
+### Template Field Resolution
+```typescript
+export const getFieldConfigForDataField = (dataFieldKey: string): FieldConfiguration | null => {
+  // First try exact match
+  if (FIELD_CONFIGURATIONS[dataFieldKey]) {
+    return FIELD_CONFIGURATIONS[dataFieldKey];
+  }
+  
+  // Then try template matching for array fields
+  for (const [templateKey, config] of Object.entries(FIELD_CONFIGURATIONS)) {
+    if (templateKey.includes('[*]')) {
+      const pattern = templateKey.replace(/\[(\*|\d+)\]/g, '\\[\\d+\\]');
+      const regex = new RegExp(`^${pattern}$`);
+      
+      if (regex.test(dataFieldKey)) {
+        const indexMatch = dataFieldKey.match(/\[(\d+)\]/);
+        const index = indexMatch ? parseInt(indexMatch[1]) : 0;
+        
+        return {
+          ...config,
+          key: dataFieldKey,
+          group: config.group?.replace('_template', `_${index}`) || config.group
+        };
+      }
+    }
+  }
+  
+  return null;
+};
+```
 
-1. **Inventory All Fields**: Create a spreadsheet with all field keys from your API
-2. **Define User Labels**: Write user-friendly labels for each field
-3. **Categorize Input Types**: Determine the appropriate input type for each field
-4. **Gather Dropdown Options**: For fields with limited options, collect all valid values
-5. **Set Validation Rules**: Define what makes each field valid
-6. **Organize Groups**: Plan the logical grouping and ordering
-7. **Implement Incrementally**: Start with one section (e.g., applicant info) and expand
+### Dynamic Group Creation
+```typescript
+export const createDynamicGroups = (data: any, templateGroups: FieldGroup[]): FieldGroup[] => {
+  const dynamicGroups: FieldGroup[] = [];
+  
+  templateGroups.forEach(template => {
+    if (!template.isTemplate || !template.templatePattern) return;
+    
+    if (template.templatePattern === 'client.household_members[*]') {
+      const householdMembers = data.client?.household_members || [];
+      
+      householdMembers.forEach((member: any, index: number) => {
+        dynamicGroups.push({
+          id: `household_member_${index}`,
+          name: `Household Member ${index + 1}`,
+          order: template.order + index,
+          parentGroup: template.parentGroup,
+          description: `Information for household member ${index + 1}`
+        });
+      });
+    }
+    
+    if (template.templatePattern === 'auto.vehicles[*]') {
+      const vehicles = data.auto?.vehicles || [];
+      
+      vehicles.forEach((vehicle: any, index: number) => {
+        dynamicGroups.push({
+          id: `vehicle_${index}`,
+          name: `Vehicle ${index + 1}`,
+          order: template.order + index,
+          parentGroup: template.parentGroup,
+          description: `Information for vehicle ${index + 1}`
+        });
+      });
+    }
+  });
+  
+  return dynamicGroups;
+};
+```
 
-This system will dramatically improve your user experience and data quality! 
+### Hierarchical Group Building
+```typescript
+export const buildGroupHierarchy = (flatGroups: Record<string, FieldGroup>, dynamicGroups: FieldGroup[] = []) => {
+  const allGroups = [...Object.values(flatGroups), ...dynamicGroups];
+  const topLevel: FieldGroup[] = [];
+  const hierarchy: Record<string, FieldGroup[]> = {};
+  
+  // Initialize hierarchy for all potential parent groups
+  allGroups.forEach(group => {
+    if (!group.parentGroup) {
+      topLevel.push(group);
+      hierarchy[group.id] = [];
+    }
+  });
+  
+  // Add children to their parents
+  allGroups.forEach(group => {
+    if (group.parentGroup && hierarchy[group.parentGroup]) {
+      hierarchy[group.parentGroup].push(group);
+    }
+  });
+  
+  // Sort everything by order
+  topLevel.sort((a, b) => a.order - b.order);
+  Object.keys(hierarchy).forEach(parentId => {
+    hierarchy[parentId].sort((a, b) => a.order - b.order);
+  });
+  
+  return { topLevel, hierarchy };
+};
+```
+
+## Implementation Guidelines
+
+### Best Practices
+1. **Use state-specific configurations** for location-dependent fields
+2. **Implement proper validation** for complex data structures
+3. **Leverage template patterns** for array-based data
+4. **Organize fields hierarchically** for better user experience
+5. **Test dynamic group creation** with sample data
+
+### Common Patterns
+- **State dropdowns**: Always include `dependsOnStateFrom` property
+- **Array fields**: Use `[*]` notation for templates
+- **Complex validation**: Implement custom validation functions
+- **Hierarchical groups**: Use `parentGroup` for nested organization
+- **Conditional fields**: Use `conditional` property for show/hide logic
+
+### Performance Considerations
+- **Lazy load options** for large datasets
+- **Cache state resolutions** to avoid repeated calculations
+- **Optimize template matching** for large array configurations
+- **Use memoization** for expensive validation functions
+
+This advanced system provides enterprise-level insurance data management with sophisticated field mapping, validation, and organization capabilities while maintaining type safety and extensibility.
