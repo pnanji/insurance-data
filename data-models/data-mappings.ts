@@ -189,6 +189,37 @@ export const PRIOR_CARRIERS_FIELD_SCHEMA = {
   }
 };
 
+// NEW: Field schemas for auto violations/claims array
+export const VIOLATIONS_CLAIMS_FIELD_SCHEMA = {
+  driver_name: {
+    label: 'Driver Name',
+    inputType: 'text' as FieldInputType,
+    required: true,
+    placeholder: 'Full name of driver'
+  },
+  date: {
+    label: 'Date',
+    inputType: 'date' as FieldInputType,
+    required: true
+  },
+  code: {
+    label: 'Violation/Claim Code',
+    inputType: 'text' as FieldInputType,
+    required: true,
+    placeholder: 'e.g., SP01, AT01, COMP'
+  },
+  amount_paid: {
+    label: 'Amount Paid',
+    inputType: 'currency' as FieldInputType,
+    required: false,
+    prefix: '$',
+    placeholder: 'Amount paid for violation fine or claim',
+    validations: [
+      { type: 'min', value: 0, message: 'Amount cannot be negative' }
+    ]
+  }
+};
+
 export interface FieldGroup {
   id: string;
   name: string;
@@ -521,21 +552,91 @@ export const FIELD_GROUPS: Record<string, FieldGroup> = {
   },
 
   // AUTO SECTION GROUPS
+  auto_policy_information: {
+    id: 'auto_policy_information',
+    name: 'Policy Information',
+    order: 1,
+    description: 'General auto policy preferences and settings',
+    defaultOpen: true
+  },
+
+  violations_claims: {
+    id: 'violations_claims',
+    name: 'Violations & Claims',
+    order: 2,
+    description: 'Driver violations and insurance claims history',
+    defaultOpen: false
+  },
+
   vehicle_template: {
     id: 'vehicle_template',
     name: 'Vehicle',
-    order: 1,
+    order: 3,
     isTemplate: true,
     templatePattern: 'auto.vehicles[*]',
     dynamicNamePattern: 'Vehicle {index + 1}',
     defaultOpen: true
   },
-  
-  auto_coverage: {
-    id: 'auto_coverage',
-    name: 'Auto Coverage',
+
+  vehicle_details: {
+    id: 'vehicle_details',
+    name: 'Vehicle Details',
+    order: 1,
+    parentGroup: 'vehicle_template',
+    description: 'Basic vehicle information and specifications',
+    defaultOpen: true
+  },
+
+  vehicle_ownership: {
+    id: 'vehicle_ownership',
+    name: 'Ownership & Registration',
     order: 2,
-    description: 'Auto insurance coverage details',
+    parentGroup: 'vehicle_template',
+    description: 'Vehicle ownership and registration details',
+    defaultOpen: true
+  },
+
+  vehicle_usage: {
+    id: 'vehicle_usage',
+    name: 'Vehicle Usage',
+    order: 3,
+    parentGroup: 'vehicle_template',
+    description: 'How the vehicle is used and driven',
+    defaultOpen: true
+  },
+
+  vehicle_features: {
+    id: 'vehicle_features',
+    name: 'Features & Equipment',
+    order: 4,
+    parentGroup: 'vehicle_template',
+    description: 'Safety features and special equipment',
+    defaultOpen: false
+  },
+
+  garaging_address: {
+    id: 'garaging_address',
+    name: 'Garaging Address',
+    order: 5,
+    parentGroup: 'vehicle_template',
+    description: 'Where the vehicle is primarily kept',
+    defaultOpen: false
+  },
+
+  vehicle_coverages: {
+    id: 'vehicle_coverages',
+    name: 'Vehicle Coverages',
+    order: 6,
+    parentGroup: 'vehicle_template',
+    description: 'Coverage options for this vehicle',
+    defaultOpen: false
+  },
+  
+  current_insurance_details: {
+    id: 'current_insurance_details',
+    name: 'Current Insurance',
+    order: 4,
+    description: 'Current auto insurance carrier and policy details',
     defaultOpen: true
   }
 };
@@ -5668,16 +5769,95 @@ export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
     ]
   },
 
+  // AUTO POLICY INFORMATION FIELDS
+  'auto.desired_policy_start_date': {
+    key: 'auto.desired_policy_start_date',
+    label: 'Desired Policy Start Date',
+    description: 'When you would like your new auto policy to begin',
+    inputType: 'date',
+    displayCasing: 'none',
+    group: 'auto_policy_information',
+    section: 'auto',
+    order: 1,
+    required: true,
+    validations: [
+      { type: 'required', message: 'Policy start date is required' }
+    ]
+  },
+
+  'auto.new_policy_term': {
+    key: 'auto.new_policy_term',
+    label: 'Policy Term',
+    description: 'Length of the insurance policy term',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'auto_policy_information',
+    section: 'auto',
+    order: 2,
+    required: true,
+    options: [
+      { value: '6 months', label: '6 Months' },
+      { value: '12 months', label: '12 Months' }
+    ],
+    validations: [
+      { type: 'required', message: 'Policy term is required' }
+    ]
+  },
+
+  'auto.interested_in_usage_based_discount': {
+    key: 'auto.interested_in_usage_based_discount',
+    label: 'Interested in Usage-Based Discount',
+    description: 'Would you like to be considered for usage-based insurance discounts?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'auto_policy_information',
+    section: 'auto',
+    order: 3,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.wants_electronic_documents': {
+    key: 'auto.wants_electronic_documents',
+    label: 'Electronic Documents',
+    description: 'Would you prefer to receive policy documents electronically?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'auto_policy_information',
+    section: 'auto',
+    order: 4,
+    options: [
+      { value: 'true', label: 'Yes, electronic documents' },
+      { value: 'false', label: 'No, paper documents' }
+    ]
+  },
+
+  // VIOLATIONS & CLAIMS FIELDS
+  'auto.violations_claims': {
+    key: 'auto.violations_claims',
+    label: 'Violations & Claims',
+    description: 'List any traffic violations or insurance claims in the past 5 years',
+    inputType: 'claims_array',
+    displayCasing: 'none',
+    group: 'violations_claims',
+    section: 'auto',
+    order: 1
+  },
+
   // VEHICLE TEMPLATE FIELDS
   'auto.vehicles[*].year': {
     key: 'auto.vehicles[*].year',
     label: 'Year',
     inputType: 'number',
     displayCasing: 'none',
-    group: 'vehicle_template',
+    group: 'vehicle_details',
     section: 'auto',
-    order: 1,
+    order: 3,
+    required: true,
     validations: [
+      { type: 'required', message: 'Vehicle year is required' },
       { type: 'min', value: 1900, message: 'Year must be 1900 or later' },
       { type: 'max', value: new Date().getFullYear() + 2, message: 'Year cannot be more than 2 years in the future' }
     ]
@@ -5689,9 +5869,9 @@ export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
     inputType: 'text',
     displayCasing: 'title',
     inputCasing: 'title',
-    group: 'vehicle_template',
+    group: 'vehicle_details',
     section: 'auto',
-    order: 2,
+    order: 4,
     required: true
   },
 
@@ -5701,9 +5881,9 @@ export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
     inputType: 'text',
     displayCasing: 'title',
     inputCasing: 'title',
-    group: 'vehicle_template',
+    group: 'vehicle_details',
     section: 'auto',
-    order: 3,
+    order: 5,
     required: true
   },
 
@@ -5713,25 +5893,904 @@ export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
     inputType: 'vin',
     displayCasing: 'upper',
     inputCasing: 'upper',
-    group: 'vehicle_template',
+    group: 'vehicle_details',
     section: 'auto',
-    order: 4,
+    order: 1,
     placeholder: '1HGBH41JXMN109186',
+    required: true,
     validations: [
+      { type: 'required', message: 'VIN is required' },
       { type: 'pattern', value: '^[A-HJ-NPR-Z0-9]{17}$', message: 'VIN must be 17 characters' }
     ]
   },
 
-  // AUTO COVERAGE
+  'auto.vehicles[*].vehicle_type': {
+    key: 'auto.vehicles[*].vehicle_type',
+    label: 'Vehicle Type',
+    inputType: 'dropdown',
+    displayCasing: 'title',
+    group: 'vehicle_details',
+    section: 'auto',
+    order: 2,
+    required: true,
+    options: [
+      { value: 'passenger_car', label: 'Passenger Car' },
+      { value: 'suv', label: 'SUV' },
+      { value: 'truck', label: 'Truck' },
+      { value: 'van', label: 'Van' },
+      { value: 'motorcycle', label: 'Motorcycle' },
+      { value: 'recreational_vehicle', label: 'Recreational Vehicle' },
+      { value: 'other', label: 'Other' }
+    ],
+    validations: [
+      { type: 'required', message: 'Vehicle type is required' }
+    ]
+  },
+
+  'auto.vehicles[*].purchased_date': {
+    key: 'auto.vehicles[*].purchased_date',
+    label: 'Purchase Date',
+    description: 'When was this vehicle purchased?',
+    inputType: 'date',
+    displayCasing: 'none',
+    group: 'vehicle_details',
+    section: 'auto',
+    order: 6
+  },
+
+  'auto.vehicles[*].original_cost': {
+    key: 'auto.vehicles[*].original_cost',
+    label: 'Original Cost',
+    description: 'Original purchase price of the vehicle',
+    inputType: 'currency',
+    displayCasing: 'none',
+    prefix: '$',
+    group: 'vehicle_details',
+    section: 'auto',
+    order: 7,
+    validations: [
+      { type: 'min', value: 0, message: 'Cost cannot be negative' }
+    ]
+  },
+
+  'auto.vehicles[*].base_list_price': {
+    key: 'auto.vehicles[*].base_list_price',
+    label: 'Base List Price',
+    description: 'MSRP or base list price when new',
+    inputType: 'currency',
+    displayCasing: 'none',
+    prefix: '$',
+    group: 'vehicle_details',
+    section: 'auto',
+    order: 8,
+    validations: [
+      { type: 'min', value: 0, message: 'Price cannot be negative' }
+    ]
+  },
+
+  'auto.vehicles[*].agreed_value': {
+    key: 'auto.vehicles[*].agreed_value',
+    label: 'Agreed Value',
+    description: 'Agreed upon value for insurance purposes (if applicable)',
+    inputType: 'currency',
+    displayCasing: 'none',
+    prefix: '$',
+    group: 'vehicle_details',
+    section: 'auto',
+    order: 9,
+    validations: [
+      { type: 'min', value: 0, message: 'Value cannot be negative' }
+    ]
+  },
+
+  // VEHICLE OWNERSHIP FIELDS
+  'auto.vehicles[*].ownership_status': {
+    key: 'auto.vehicles[*].ownership_status',
+    label: 'Ownership Status',
+    inputType: 'dropdown',
+    displayCasing: 'title',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 1,
+    required: true,
+    options: [
+      { value: 'owned', label: 'Owned' },
+      { value: 'leased', label: 'Leased' },
+      { value: 'financed', label: 'Financed' },
+      { value: 'company_owned', label: 'Company Owned' }
+    ],
+    validations: [
+      { type: 'required', message: 'Ownership status is required' }
+    ]
+  },
+
+  'auto.vehicles[*].primary_driver': {
+    key: 'auto.vehicles[*].primary_driver',
+    label: 'Primary Driver',
+    description: 'Who is the primary driver of this vehicle?',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 2,
+    required: true,
+    validations: [
+      { type: 'required', message: 'Primary driver is required' }
+    ]
+  },
+
+  'auto.vehicles[*].registered_owner': {
+    key: 'auto.vehicles[*].registered_owner',
+    label: 'Registered Owner',
+    description: 'Name on the vehicle registration',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 3,
+    required: true,
+    validations: [
+      { type: 'required', message: 'Registered owner is required' }
+    ]
+  },
+
+  'auto.vehicles[*].ownership_duration': {
+    key: 'auto.vehicles[*].ownership_duration',
+    label: 'How Long Owned',
+    description: 'How long have you owned/had this vehicle?',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 4,
+    options: [
+      { value: 'less_than_1_year', label: 'Less than 1 year' },
+      { value: '1_to_3_years', label: '1-3 years' },
+      { value: '3_to_5_years', label: '3-5 years' },
+      { value: '5_to_10_years', label: '5-10 years' },
+      { value: 'more_than_10_years', label: 'More than 10 years' }
+    ]
+  },
+
+  'auto.vehicles[*].is_rented_leased_for_fee': {
+    key: 'auto.vehicles[*].is_rented_leased_for_fee',
+    label: 'Rented or Leased for Fee',
+    description: 'Is this vehicle rented or leased out to others for a fee?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 5,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].is_weight_between_14k_16k_and_used_for_farm': {
+    key: 'auto.vehicles[*].is_weight_between_14k_16k_and_used_for_farm',
+    label: 'Farm Vehicle (14k-16k lbs)',
+    description: 'Is this vehicle between 14,000-16,000 lbs and used for farming?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 6,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].is_camper_unit_included': {
+    key: 'auto.vehicles[*].is_camper_unit_included',
+    label: 'Camper Unit Included',
+    description: 'Does this vehicle include a camper unit?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_ownership',
+    section: 'auto',
+    order: 7,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  // VEHICLE USAGE FIELDS
+  'auto.vehicles[*].primary_use': {
+    key: 'auto.vehicles[*].primary_use',
+    label: 'Primary Use',
+    description: 'How is this vehicle primarily used?',
+    inputType: 'dropdown',
+    displayCasing: 'title',
+    group: 'vehicle_usage',
+    section: 'auto',
+    order: 1,
+    required: true,
+    options: [
+      { value: 'pleasure', label: 'Pleasure/Personal' },
+      { value: 'commute', label: 'Commute to Work/School' },
+      { value: 'business', label: 'Business Use' },
+      { value: 'farm', label: 'Farm Use' },
+      { value: 'commercial', label: 'Commercial Use' }
+    ],
+    validations: [
+      { type: 'required', message: 'Primary use is required' }
+    ]
+  },
+
+  'auto.vehicles[*].distance_to_work_or_school': {
+    key: 'auto.vehicles[*].distance_to_work_or_school',
+    label: 'Distance to Work/School',
+    description: 'One-way distance to work or school (miles)',
+    inputType: 'number',
+    displayCasing: 'none',
+    suffix: ' miles',
+    group: 'vehicle_usage',
+    section: 'auto',
+    order: 2,
+    validations: [
+      { type: 'min', value: 0, message: 'Distance cannot be negative' },
+      { type: 'max', value: 500, message: 'Distance seems unusually high' }
+    ]
+  },
+
+  'auto.vehicles[*].days_driven_per_week': {
+    key: 'auto.vehicles[*].days_driven_per_week',
+    label: 'Days Driven Per Week',
+    description: 'How many days per week is this vehicle typically driven?',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_usage',
+    section: 'auto',
+    order: 3,
+    options: [
+      { value: '1', label: '1 day' },
+      { value: '2', label: '2 days' },
+      { value: '3', label: '3 days' },
+      { value: '4', label: '4 days' },
+      { value: '5', label: '5 days' },
+      { value: '6', label: '6 days' },
+      { value: '7', label: '7 days' }
+    ]
+  },
+
+  'auto.vehicles[*].annual_mileage': {
+    key: 'auto.vehicles[*].annual_mileage',
+    label: 'Annual Mileage',
+    description: 'Estimated miles driven per year',
+    inputType: 'number',
+    displayCasing: 'none',
+    suffix: ' miles/year',
+    group: 'vehicle_usage',
+    section: 'auto',
+    order: 4,
+    required: true,
+    validations: [
+      { type: 'required', message: 'Annual mileage is required' },
+      { type: 'min', value: 0, message: 'Mileage cannot be negative' },
+      { type: 'max', value: 100000, message: 'Mileage seems unusually high' }
+    ]
+  },
+
+  'auto.vehicles[*].used_for_rideshare': {
+    key: 'auto.vehicles[*].used_for_rideshare',
+    label: 'Used for Rideshare',
+    description: 'Is this vehicle used for rideshare services (Uber, Lyft, etc.)?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_usage',
+    section: 'auto',
+    order: 5,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  // VEHICLE FEATURES FIELDS
+  'auto.vehicles[*].suspension_indicator': {
+    key: 'auto.vehicles[*].suspension_indicator',
+    label: 'Suspension Type',
+    description: 'Type of suspension system',
+    inputType: 'dropdown',
+    displayCasing: 'title',
+    group: 'vehicle_features',
+    section: 'auto',
+    order: 1,
+    options: [
+      { value: 'standard', label: 'Standard' },
+      { value: 'air', label: 'Air Suspension' },
+      { value: 'sport', label: 'Sport Suspension' },
+      { value: 'lowered', label: 'Lowered' },
+      { value: 'lifted', label: 'Lifted' },
+      { value: 'unknown', label: 'Unknown' }
+    ]
+  },
+
+  'auto.vehicles[*].has_anti_theft_device': {
+    key: 'auto.vehicles[*].has_anti_theft_device',
+    label: 'Anti-Theft Device',
+    description: 'Does this vehicle have an anti-theft device?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_features',
+    section: 'auto',
+    order: 2,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].has_anti_lock_brakes': {
+    key: 'auto.vehicles[*].has_anti_lock_brakes',
+    label: 'Anti-Lock Brakes (ABS)',
+    description: 'Does this vehicle have anti-lock brakes?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_features',
+    section: 'auto',
+    order: 3,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  // GARAGING ADDRESS FIELDS
+  'auto.vehicles[*].garaging_address_street': {
+    key: 'auto.vehicles[*].garaging_address_street',
+    label: 'Garaging Street Address',
+    description: 'Where is this vehicle primarily kept overnight?',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'garaging_address',
+    section: 'auto',
+    order: 1,
+    required: true,
+    validations: [
+      { type: 'required', message: 'Garaging address is required' }
+    ]
+  },
+
+  'auto.vehicles[*].garaging_address_apt_unit': {
+    key: 'auto.vehicles[*].garaging_address_apt_unit',
+    label: 'Apt/Unit',
+    inputType: 'text',
+    displayCasing: 'upper',
+    inputCasing: 'upper',
+    group: 'garaging_address',
+    section: 'auto',
+    order: 2
+  },
+
+  'auto.vehicles[*].garaging_address_city': {
+    key: 'auto.vehicles[*].garaging_address_city',
+    label: 'City',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'garaging_address',
+    section: 'auto',
+    order: 3,
+    required: true,
+    validations: [
+      { type: 'required', message: 'City is required' }
+    ]
+  },
+
+  'auto.vehicles[*].garaging_address_state': {
+    key: 'auto.vehicles[*].garaging_address_state',
+    label: 'State',
+    inputType: 'dropdown',
+    displayCasing: 'upper',
+    group: 'garaging_address',
+    section: 'auto',
+    order: 4,
+    required: true,
+    options: [
+      { value: 'AL', label: 'Alabama' },
+      { value: 'AK', label: 'Alaska' },
+      { value: 'AZ', label: 'Arizona' },
+      { value: 'AR', label: 'Arkansas' },
+      { value: 'CA', label: 'California' },
+      { value: 'CO', label: 'Colorado' },
+      { value: 'CT', label: 'Connecticut' },
+      { value: 'DE', label: 'Delaware' },
+      { value: 'FL', label: 'Florida' },
+      { value: 'GA', label: 'Georgia' },
+      { value: 'HI', label: 'Hawaii' },
+      { value: 'ID', label: 'Idaho' },
+      { value: 'IL', label: 'Illinois' },
+      { value: 'IN', label: 'Indiana' },
+      { value: 'IA', label: 'Iowa' },
+      { value: 'KS', label: 'Kansas' },
+      { value: 'KY', label: 'Kentucky' },
+      { value: 'LA', label: 'Louisiana' },
+      { value: 'ME', label: 'Maine' },
+      { value: 'MD', label: 'Maryland' },
+      { value: 'MA', label: 'Massachusetts' },
+      { value: 'MI', label: 'Michigan' },
+      { value: 'MN', label: 'Minnesota' },
+      { value: 'MS', label: 'Mississippi' },
+      { value: 'MO', label: 'Missouri' },
+      { value: 'MT', label: 'Montana' },
+      { value: 'NE', label: 'Nebraska' },
+      { value: 'NV', label: 'Nevada' },
+      { value: 'NH', label: 'New Hampshire' },
+      { value: 'NJ', label: 'New Jersey' },
+      { value: 'NM', label: 'New Mexico' },
+      { value: 'NY', label: 'New York' },
+      { value: 'NC', label: 'North Carolina' },
+      { value: 'ND', label: 'North Dakota' },
+      { value: 'OH', label: 'Ohio' },
+      { value: 'OK', label: 'Oklahoma' },
+      { value: 'OR', label: 'Oregon' },
+      { value: 'PA', label: 'Pennsylvania' },
+      { value: 'RI', label: 'Rhode Island' },
+      { value: 'SC', label: 'South Carolina' },
+      { value: 'SD', label: 'South Dakota' },
+      { value: 'TN', label: 'Tennessee' },
+      { value: 'TX', label: 'Texas' },
+      { value: 'UT', label: 'Utah' },
+      { value: 'VT', label: 'Vermont' },
+      { value: 'VA', label: 'Virginia' },
+      { value: 'WA', label: 'Washington' },
+      { value: 'WV', label: 'West Virginia' },
+      { value: 'WI', label: 'Wisconsin' },
+      { value: 'WY', label: 'Wyoming' }
+    ],
+    validations: [
+      { type: 'required', message: 'State is required' }
+    ]
+  },
+
+  'auto.vehicles[*].garaging_address_zip': {
+    key: 'auto.vehicles[*].garaging_address_zip',
+    label: 'ZIP Code',
+    inputType: 'zip',
+    displayCasing: 'none',
+    group: 'garaging_address',
+    section: 'auto',
+    order: 5,
+    required: true,
+    validations: [
+      { type: 'required', message: 'ZIP code is required' },
+      { type: 'pattern', value: '^[0-9]{5}(-[0-9]{4})?$', message: 'Enter a valid ZIP code' }
+    ]
+  },
+
+  // VEHICLE COVERAGES FIELDS
+  'auto.vehicles[*].coverages.collision': {
+    key: 'auto.vehicles[*].coverages.collision',
+    label: 'Collision Coverage',
+    description: 'Coverage for damage to your vehicle from collisions',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 1,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '100', label: '$100 Deductible' },
+      { value: '250', label: '$250 Deductible' },
+      { value: '500', label: '$500 Deductible' },
+      { value: '1000', label: '$1,000 Deductible' },
+      { value: '2500', label: '$2,500 Deductible' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.comprehensive': {
+    key: 'auto.vehicles[*].coverages.comprehensive',
+    label: 'Comprehensive Coverage',
+    description: 'Coverage for damage from theft, vandalism, weather, etc.',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 2,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '100', label: '$100 Deductible' },
+      { value: '250', label: '$250 Deductible' },
+      { value: '500', label: '$500 Deductible' },
+      { value: '1000', label: '$1,000 Deductible' },
+      { value: '2500', label: '$2,500 Deductible' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.auto_loan_lease': {
+    key: 'auto.vehicles[*].coverages.auto_loan_lease',
+    label: 'Auto Loan/Lease Coverage',
+    description: 'Gap coverage for financed or leased vehicles',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 3,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: 'gap_coverage', label: 'Gap Coverage' },
+      { value: 'loan_lease_payoff', label: 'Loan/Lease Payoff' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.roadside_assistance': {
+    key: 'auto.vehicles[*].coverages.roadside_assistance',
+    label: 'Roadside Assistance',
+    description: 'Emergency roadside assistance coverage',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 4,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.rental_transportation_expense': {
+    key: 'auto.vehicles[*].coverages.rental_transportation_expense',
+    label: 'Rental/Transportation Expense',
+    description: 'Coverage for rental car expenses when your car is being repaired',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 5,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '30_per_day_900_max', label: '$30/day, $900 max' },
+      { value: '40_per_day_1200_max', label: '$40/day, $1,200 max' },
+      { value: '50_per_day_1500_max', label: '$50/day, $1,500 max' },
+      { value: '75_per_day_2250_max', label: '$75/day, $2,250 max' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.towing': {
+    key: 'auto.vehicles[*].coverages.towing',
+    label: 'Towing Coverage',
+    description: 'Coverage for towing expenses',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 6,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '25', label: '$25 per occurrence' },
+      { value: '50', label: '$50 per occurrence' },
+      { value: '100', label: '$100 per occurrence' },
+      { value: '200', label: '$200 per occurrence' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.customized_equipment': {
+    key: 'auto.vehicles[*].coverages.customized_equipment',
+    label: 'Customized Equipment',
+    description: 'Coverage for custom parts and equipment',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 7,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '1000', label: '$1,000' },
+      { value: '2500', label: '$2,500' },
+      { value: '5000', label: '$5,000' },
+      { value: '10000', label: '$10,000' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.custom_audio_system': {
+    key: 'auto.vehicles[*].coverages.custom_audio_system',
+    label: 'Custom Audio System',
+    description: 'Coverage for aftermarket audio equipment',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 8,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '500', label: '$500' },
+      { value: '1000', label: '$1,000' },
+      { value: '2500', label: '$2,500' },
+      { value: '5000', label: '$5,000' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.auto_replacement': {
+    key: 'auto.vehicles[*].coverages.auto_replacement',
+    label: 'Auto Replacement Coverage',
+    description: 'New car replacement coverage for new vehicles',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 9,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.original_equipment_manufacturers_coverage': {
+    key: 'auto.vehicles[*].coverages.original_equipment_manufacturers_coverage',
+    label: 'OEM Parts Coverage',
+    description: 'Original equipment manufacturer parts coverage',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 10,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.mexico_coverage': {
+    key: 'auto.vehicles[*].coverages.mexico_coverage',
+    label: 'Mexico Coverage',
+    description: 'Coverage when driving in Mexico',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 11,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.ride_sharing': {
+    key: 'auto.vehicles[*].coverages.ride_sharing',
+    label: 'Rideshare Coverage',
+    description: 'Coverage for rideshare driving (Uber, Lyft, etc.)',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 12,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.portable_electronic_media': {
+    key: 'auto.vehicles[*].coverages.portable_electronic_media',
+    label: 'Portable Electronic Media',
+    description: 'Coverage for portable electronic devices',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 13,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '500', label: '$500' },
+      { value: '1000', label: '$1,000' },
+      { value: '1500', label: '$1,500' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.trip_interruption': {
+    key: 'auto.vehicles[*].coverages.trip_interruption',
+    label: 'Trip Interruption',
+    description: 'Coverage for expenses when trips are interrupted due to vehicle breakdown',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 14,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '500', label: '$500' },
+      { value: '750', label: '$750' },
+      { value: '1000', label: '$1,000' }
+    ]
+  },
+
+  'auto.vehicles[*].coverages.diminishing_deductible': {
+    key: 'auto.vehicles[*].coverages.diminishing_deductible',
+    label: 'Diminishing Deductible',
+    description: 'Deductible reduces over time with claim-free driving',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'vehicle_coverages',
+    section: 'auto',
+    order: 15,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  // CURRENT INSURANCE DETAILS
+  'auto.current_insurance.has_current_insurance': {
+    key: 'auto.current_insurance.has_current_insurance',
+    label: 'Currently Have Auto Insurance',
+    description: 'Do you currently have auto insurance?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 1,
+    required: true,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ],
+    validations: [
+      { type: 'required', message: 'Please indicate if you have current insurance' }
+    ]
+  },
+
+  'auto.current_insurance.has_prior_30_days_insurance': {
+    key: 'auto.current_insurance.has_prior_30_days_insurance',
+    label: 'Had Insurance in Past 30 Days',
+    description: 'Have you had auto insurance in the past 30 days?',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 2,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.current_insurance.continuous_insurance_duration': {
+    key: 'auto.current_insurance.continuous_insurance_duration',
+    label: 'Continuous Insurance Duration',
+    description: 'How long have you had continuous auto insurance coverage?',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 3,
+    options: [
+      { value: 'less_than_6_months', label: 'Less than 6 months' },
+      { value: '6_months_to_1_year', label: '6 months to 1 year' },
+      { value: '1_to_3_years', label: '1 to 3 years' },
+      { value: '3_to_5_years', label: '3 to 5 years' },
+      { value: '5_plus_years', label: '5+ years' }
+    ]
+  },
+
+  'auto.current_insurance.carrier_name': {
+    key: 'auto.current_insurance.carrier_name',
+    label: 'Current Insurance Carrier',
+    description: 'Name of your current auto insurance company',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 4
+  },
+
+  'auto.current_insurance.policy_number': {
+    key: 'auto.current_insurance.policy_number',
+    label: 'Policy Number',
+    description: 'Current auto insurance policy number',
+    inputType: 'text',
+    displayCasing: 'upper',
+    inputCasing: 'upper',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 5
+  },
+
+  'auto.current_insurance.writing_company': {
+    key: 'auto.current_insurance.writing_company',
+    label: 'Writing Company',
+    description: 'The insurance company that underwrites the policy',
+    inputType: 'text',
+    displayCasing: 'title',
+    inputCasing: 'title',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 6
+  },
+
+  'auto.current_insurance.premium': {
+    key: 'auto.current_insurance.premium',
+    label: 'Current Premium',
+    description: 'Current premium amount',
+    inputType: 'currency',
+    displayCasing: 'none',
+    prefix: '$',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 7,
+    validations: [
+      { type: 'min', value: 0, message: 'Premium cannot be negative' }
+    ]
+  },
+
+  'auto.current_insurance.term_start_date': {
+    key: 'auto.current_insurance.term_start_date',
+    label: 'Term Start Date',
+    description: 'When did your current policy term start?',
+    inputType: 'date',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 8
+  },
+
+  'auto.current_insurance.term_expiration_date': {
+    key: 'auto.current_insurance.term_expiration_date',
+    label: 'Term Expiration Date',
+    description: 'When does your current policy term expire?',
+    inputType: 'date',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 9
+  },
+
+  'auto.current_insurance.time_with_carrier': {
+    key: 'auto.current_insurance.time_with_carrier',
+    label: 'Time with Current Carrier',
+    description: 'How long have you been with your current insurance carrier?',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 10,
+    options: [
+      { value: 'less_than_6_months', label: 'Less than 6 months' },
+      { value: '6_months_to_1_year', label: '6 months to 1 year' },
+      { value: '1_to_2_years', label: '1 to 2 years' },
+      { value: '2_to_3_years', label: '2 to 3 years' },
+      { value: '3_to_5_years', label: '3 to 5 years' },
+      { value: '5_plus_years', label: '5+ years' }
+    ]
+  },
+
+  'auto.current_insurance.reason_for_no_insurance': {
+    key: 'auto.current_insurance.reason_for_no_insurance',
+    label: 'Reason for No Insurance',
+    description: 'If you do not have current insurance, why?',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 11,
+    options: [
+      { value: 'new_driver', label: 'New driver' },
+      { value: 'no_vehicle', label: 'Did not own a vehicle' },
+      { value: 'cost', label: 'Cost too high' },
+      { value: 'cancelled_non_payment', label: 'Policy cancelled for non-payment' },
+      { value: 'cancelled_other', label: 'Policy cancelled for other reasons' },
+      { value: 'military_deployment', label: 'Military deployment' },
+      { value: 'other', label: 'Other' }
+    ]
+  },
+
+  // AUTO COVERAGE - POLICY COVERAGES
   'auto.current_insurance.policy_coverages.bodily_injury': {
     key: 'auto.current_insurance.policy_coverages.bodily_injury',
     label: 'Bodily Injury Liability',
     description: 'Coverage for injuries caused to others in an accident',
     inputType: 'dropdown',
     displayCasing: 'none',
-    group: 'auto_coverage',
+    group: 'current_insurance_details',
     section: 'auto',
-    order: 1,
+    order: 12,
     dependsOnStateFrom: 'client.current_address.state',
     stateSpecificOptions: {
       'FL': [
@@ -5763,6 +6822,168 @@ export const FIELD_CONFIGURATIONS: Record<string, FieldConfiguration> = {
       ]
     }
   },
+
+  'auto.current_insurance.policy_coverages.property_damage_liability': {
+    key: 'auto.current_insurance.policy_coverages.property_damage_liability',
+    label: 'Property Damage Liability',
+    description: 'Coverage for property damage caused to others',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 13,
+    options: [
+      { value: '10000', label: '$10,000' },
+      { value: '15000', label: '$15,000' },
+      { value: '25000', label: '$25,000' },
+      { value: '50000', label: '$50,000' },
+      { value: '100000', label: '$100,000' },
+      { value: '250000', label: '$250,000' },
+      { value: '500000', label: '$500,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.medical_payments': {
+    key: 'auto.current_insurance.policy_coverages.medical_payments',
+    label: 'Medical Payments',
+    description: 'Coverage for medical expenses regardless of fault',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 14,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '1000', label: '$1,000' },
+      { value: '2500', label: '$2,500' },
+      { value: '5000', label: '$5,000' },
+      { value: '10000', label: '$10,000' },
+      { value: '25000', label: '$25,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.uninsured_motorists_bodily_injury': {
+    key: 'auto.current_insurance.policy_coverages.uninsured_motorists_bodily_injury',
+    label: 'Uninsured Motorist Bodily Injury',
+    description: 'Coverage when injured by uninsured drivers',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 15,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '15000_30000', label: '$15,000/$30,000' },
+      { value: '25000_50000', label: '$25,000/$50,000' },
+      { value: '50000_100000', label: '$50,000/$100,000' },
+      { value: '100000_300000', label: '$100,000/$300,000' },
+      { value: '250000_500000', label: '$250,000/$500,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.underinsured_motorists_bodily_injury': {
+    key: 'auto.current_insurance.policy_coverages.underinsured_motorists_bodily_injury',
+    label: 'Underinsured Motorist Bodily Injury',
+    description: 'Coverage when injured by drivers with insufficient insurance',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 16,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '15000_30000', label: '$15,000/$30,000' },
+      { value: '25000_50000', label: '$25,000/$50,000' },
+      { value: '50000_100000', label: '$50,000/$100,000' },
+      { value: '100000_300000', label: '$100,000/$300,000' },
+      { value: '250000_500000', label: '$250,000/$500,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.extended_non_owned_liability': {
+    key: 'auto.current_insurance.policy_coverages.extended_non_owned_liability',
+    label: 'Extended Non-Owned Liability',
+    description: 'Coverage when driving vehicles you do not own',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 17,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.first_accident_forgiveness': {
+    key: 'auto.current_insurance.policy_coverages.first_accident_forgiveness',
+    label: 'First Accident Forgiveness',
+    description: 'Forgiveness for your first at-fault accident',
+    inputType: 'radio',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 18,
+    options: [
+      { value: 'true', label: 'Yes' },
+      { value: 'false', label: 'No' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.personal_injury_protection': {
+    key: 'auto.current_insurance.policy_coverages.personal_injury_protection',
+    label: 'Personal Injury Protection (PIP)',
+    description: 'Coverage for medical expenses and lost wages regardless of fault',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 19,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '2500', label: '$2,500' },
+      { value: '5000', label: '$5,000' },
+      { value: '10000', label: '$10,000' },
+      { value: '25000', label: '$25,000' },
+      { value: '50000', label: '$50,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.uninsured_motorist_property_damage': {
+    key: 'auto.current_insurance.policy_coverages.uninsured_motorist_property_damage',
+    label: 'Uninsured Motorist Property Damage',
+    description: 'Coverage for vehicle damage caused by uninsured drivers',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 20,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '10000', label: '$10,000' },
+      { value: '15000', label: '$15,000' },
+      { value: '25000', label: '$25,000' },
+      { value: '50000', label: '$50,000' }
+    ]
+  },
+
+  'auto.current_insurance.policy_coverages.underinsured_motorist_property_damage': {
+    key: 'auto.current_insurance.policy_coverages.underinsured_motorist_property_damage',
+    label: 'Underinsured Motorist Property Damage',
+    description: 'Coverage for vehicle damage caused by drivers with insufficient insurance',
+    inputType: 'dropdown',
+    displayCasing: 'none',
+    group: 'current_insurance_details',
+    section: 'auto',
+    order: 21,
+    options: [
+      { value: 'none', label: 'No Coverage' },
+      { value: '10000', label: '$10,000' },
+      { value: '15000', label: '$15,000' },
+      { value: '25000', label: '$25,000' },
+      { value: '50000', label: '$50,000' }
+    ]
+  }
   
 };
 
@@ -5773,6 +6994,9 @@ export const getFieldConfig = (fieldKey: string): FieldConfiguration | null => {
 
 // NEW: Helper function to get field schema for claims arrays
 export const getClaimsArraySchema = (fieldKey: string) => {
+  if (fieldKey.includes('violations_claims')) {
+    return VIOLATIONS_CLAIMS_FIELD_SCHEMA;
+  }
   if (fieldKey.includes('claims') && !fieldKey.includes('prior_carriers')) {
     return CLAIMS_FIELD_SCHEMA;
   }
