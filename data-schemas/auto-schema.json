@@ -1,0 +1,89 @@
+{
+  "desired_policy_start_date": "string",
+  "new_policy_term": "string",
+  "interested_in_usage_based_discount": "boolean",
+  "wants_electronic_documents": "boolean",
+  "violations_claims": [
+        {
+          "driver_name": "string",
+          "date": "string",
+          "code": "string",
+          "amount_paid": "number"
+        }
+      ],
+  "vehicles": [
+    {
+      "vin": "string",
+      "vehicle_type": "string",
+      "year": "number",
+      "make": "string",
+      "model": "string",
+      "purchased_date": "string",
+      "original_cost": "number",
+      "base_list_price": "number",
+      "agreed_value": "number",
+      "ownership_status": "string",
+      "primary_driver": "string",
+      "registered_owner": "string",
+      "ownership_duration": "string",
+      "is_rented_leased_for_fee": "boolean",
+      "is_weight_between_14k_16k_and_used_for_farm": "boolean",
+      "is_camper_unit_included": "boolean",
+      "suspension_indicator": "string",
+      "has_anti_theft_device": "boolean",
+      "has_anti_lock_brakes": "boolean",
+      "primary_use": "string",
+      "distance_to_work_or_school": "number",
+      "days_driven_per_week": "number",
+      "annual_mileage": "number",
+      "used_for_rideshare": "boolean",
+      "garaging_address_street": "string",
+      "garaging_address_apt_unit": "string",
+      "garaging_address_city": "string",
+      "garaging_address_state": "string",
+      "garaging_address_zip": "string",
+      "coverages": {
+        "collision": "string",
+        "comprehensive": "string",
+        "auto_loan_lease": "string",
+        "roadside_assistance": "string",
+        "rental_transportation_expense": "string",
+        "towing": "string",
+        "customized_equipment": "string",
+        "custom_audio_system": "string",
+        "auto_replacement": "string",
+        "original_equipment_manufacturers_coverage": "string",
+        "mexico_coverage": "string",
+        "ride_sharing": "string",
+        "portable_electronic_media": "string",
+        "trip_interruption": "string",
+        "diminishing_deductible": "string"
+      }
+    }
+  ],
+  "current_insurance": {
+    "has_current_insurance": "boolean",
+    "has_prior_30_days_insurance": "boolean",
+    "continuous_insurance_duration": "string",
+    "carrier_name": "string",
+    "policy_number": "string",
+    "writing_company": "string",
+    "premium": "string",
+    "term_start_date": "string",
+    "term_expiration_date": "string",
+    "time_with_carrier": "string",
+    "reason_for_no_insurance": "string",
+    "policy_coverages": {
+      "bodily_injury": "string",
+      "property_damage_liability": "string",
+      "medical_payments": "string",
+      "uninsured_motorists_bodily_injury": "string",
+      "underinsured_motorists_bodily_injury": "string",
+      "extended_non_owned_liability": "string (optional)",
+      "first_accident_forgiveness": "string (optional)",
+      "personal_injury_protection": "string (optional)",
+      "uninsured_motorist_property_damage": "string (optional)",
+      "underinsured_motorist_property_damage": "string (optional)"
+    }
+  }
+} 
